@@ -63,3 +63,22 @@ test('decryptMnemonic fails with the wrong PIN', () => {
     const decryptedMnemonicWithWrongPin = decryptMnemonic(encryptedMnemonic, wrongPin);
     expect(decryptedMnemonicWithWrongPin).not.toBe(testMnemonic);
 });
+
+test('should handle a specific mnemonic phrase correctly', () => {
+    const mnemonic = "food snack service process wait flee flat immense hint tail embark fog";
+    const pin = 'supersecret';
+
+    // Test mnemonic to entropy and back
+    const entropy = mnemonicToEntropy(mnemonic);
+    const regeneratedMnemonic = entropyToMnemonic(entropy);
+    expect(regeneratedMnemonic).toBe(mnemonic);
+
+    // Test encryption and decryption
+    const encryptedMnemonic = encryptMnemonic(mnemonic, pin);
+    expect(encryptedMnemonic).not.toBe(mnemonic);
+    expect(encryptedMnemonic.split(' ').length).toBe(12);
+
+    const decryptedMnemonic = decryptMnemonic(encryptedMnemonic, pin);
+    expect(decryptedMnemonic).toBe(mnemonic);
+});
+
