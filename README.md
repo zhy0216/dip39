@@ -4,11 +4,17 @@ A simple, secure command-line tool for encrypting and decrypting BIP39 mnemonic 
 
 This tool uses AES-256-CTR for encryption, deriving a deterministic key and IV from your PIN to ensure that your mnemonic is securely encrypted and can be reliably decrypted.
 
+## Why Use This Tool?
+
+Storing your mnemonic phrase on paper can be risky. Anyone who sees it can gain access to your crypto assets. This tool provides an extra layer of security by encrypting your mnemonic with a PIN.
+
+Even if someone finds your encrypted mnemonic, they won't be able to access your original wallet without the PIN. Instead, they would unknowingly access a different, empty wallet. This acts as a "honeypot," a cybersecurity technique to deceive and mislead attackers, deterring theft by making them think there are no funds to steal.
+
 ## Features
 
-- **Encrypt**: Securely encrypt a 12, 15, 18, 21, or 24-word mnemonic phrase.
+- **Encrypt**: Securely encrypt a 12, 15, 18, 21, or 24-word mnemonic phrase. The encrypted output is also a valid BIP39 mnemonic.
 - **Decrypt**: Decrypt a previously encrypted mnemonic to recover the original phrase.
-- **Secure**: Uses strong, standard cryptographic libraries (Node.js `crypto`).
+- **Secure**: Uses strong, standard cryptographic libraries (bun `crypto`).
 - **Deterministic**: The same mnemonic and PIN will always produce the same encrypted output.
 
 ## Prerequisites
@@ -46,7 +52,7 @@ The tool will prompt you to choose whether to encrypt or decrypt, and then ask f
 $ bun start
 --- BIP39 Mnemonic Encryptor ---
 Choose action [1: Encrypt, 2: Decrypt]: 1
-Enter your 12, 15, 18, 21, or 24-word mnemonic phrase: your twelve word mnemonic phrase goes here just like this example please
+Enter your mnemonic phrase: your twelve word mnemonic phrase goes here just like this example please
 Enter your PIN: 1234
 
 Processing...
