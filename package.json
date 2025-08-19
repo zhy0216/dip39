@@ -1,0 +1,15 @@
+{
+  "name": "bip39-encryptor-cli",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "bun run cli.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "typescript": "^5.9.2"
+  },
+  "devDependencies": {
+    "bun-types": "^1.2.20"
+  }
+}
