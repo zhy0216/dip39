@@ -74,23 +74,9 @@ Processing...
 --------------
 ```
 
-## Development
 
-### Running Tests
-
-To run the test suite, use:
-
-```sh
-bun test
-```
-
-### Type Checking
-
-To check for TypeScript errors, run:
-
-```sh
-bun run typecheck
-```
+## Reference
+- **[iancoleman.io/bip39](https://iancoleman.io/bip39/)**: An excellent tool for working with BIP39 mnemonics, which served as a valuable reference.
 
 ## License
 
