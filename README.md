@@ -2,7 +2,7 @@
 
 A simple, secure command-line tool for encrypting and decrypting BIP39 mnemonic phrases using a PIN.
 
-This tool uses AES-256-CTR for encryption, deriving a deterministic key and IV from your PIN to ensure that your mnemonic is securely encrypted and can be reliably decrypted.
+This tool uses AES-256-CTR for encryption, deriving a deterministic key and IV from your PIN to ensure that your mnemonic is securely encrypted and can be reliably decrypted. **The encrypted output is also a valid BIP39 mnemonic.**
 
 ## Why Use This Tool?
 
