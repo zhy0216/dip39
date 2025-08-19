@@ -48,16 +48,21 @@ async function main() {
 
     const consoleIterator = console[Symbol.asyncIterator]();
 
-    const mode = await getMode(consoleIterator);
-    const mnemonic = await promptUser(consoleIterator, 'Enter your mnemonic phrase: ');
-    const pin = await promptUser(consoleIterator, 'Enter your PIN: ');
+    try {
+        const mode = await getMode(consoleIterator);
+        const mnemonic = await promptUser(consoleIterator, 'Enter your mnemonic phrase: ');
+        const pin = await promptUser(consoleIterator, 'Enter your PIN: ');
 
-    console.log('\nProcessing...');
-    const result = await processMnemonic(mnemonic, pin, mode);
+        console.log('\nProcessing...');
+        const result = await processMnemonic(mnemonic, pin, mode);
 
-    console.log('--- Result ---');
-    console.log(result);
-    console.log('--------------');
+        console.log('--- Result ---');
+        console.log(result);
+        console.log('--------------');
+    } finally {
+        // Ensure the iterator is closed to allow the process to exit.
+        consoleIterator.return?.();
+    }
 }
 
 // This ensures the main function runs only when the script is executed directly.
