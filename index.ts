@@ -18,24 +18,43 @@ export function getKeyAndIv(pin: string): { key: Buffer; iv: Buffer } {
 
 /**
  * Encrypts a mnemonic phrase using a PIN with AES-256-CTR.
+ * @param mnemonic - The mnemonic phrase to encrypt
+ * @param pin - The PIN to use for encryption
+ * @param loops - Number of encryption loops (default: 1,000,000)
  */
-export function encryptMnemonic(mnemonic: string, pin: string): string {
-    const { key, iv } = getKeyAndIv(pin);
-    const entropy = mnemonicToEntropy(mnemonic);
-    const cipher = createCipheriv('aes-256-ctr', key, iv);
-    const encryptedEntropy = Buffer.concat([cipher.update(entropy), cipher.final()]);
-    return entropyToMnemonic(encryptedEntropy);
+export function encryptMnemonic(mnemonic: string, pin: string, loops: number = 1_000_000): string {
+    let currentMnemonic = mnemonic;
+    
+    for (let i = 0; i < loops; i++) {
+        const { key, iv } = getKeyAndIv(pin + i.toString());
+        const entropy = mnemonicToEntropy(currentMnemonic);
+        const cipher = createCipheriv('aes-256-ctr', key, iv);
+        const encryptedEntropy = Buffer.concat([cipher.update(entropy), cipher.final()]);
+        currentMnemonic = entropyToMnemonic(encryptedEntropy);
+    }
+    
+    return currentMnemonic;
 }
 
 /**
  * Decrypts an encrypted mnemonic phrase using a PIN.
+ * @param encryptedMnemonic - The encrypted mnemonic phrase to decrypt
+ * @param pin - The PIN to use for decryption
+ * @param loops - Number of decryption loops (default: 1,000,000)
  */
-export function decryptMnemonic(encryptedMnemonic: string, pin: string): string {
-    const { key, iv } = getKeyAndIv(pin);
-    const encryptedEntropy = mnemonicToEntropy(encryptedMnemonic);
-    const decipher = createDecipheriv('aes-256-ctr', key, iv);
-    const decryptedEntropy = Buffer.concat([decipher.update(encryptedEntropy), decipher.final()]);
-    return entropyToMnemonic(decryptedEntropy);
+export function decryptMnemonic(encryptedMnemonic: string, pin: string, loops: number = 1_000_000): string {
+    let currentMnemonic = encryptedMnemonic;
+    
+    // Decrypt in reverse order (from loops-1 down to 0)
+    for (let i = loops - 1; i >= 0; i--) {
+        const { key, iv } = getKeyAndIv(pin + i.toString());
+        const encryptedEntropy = mnemonicToEntropy(currentMnemonic);
+        const decipher = createDecipheriv('aes-256-ctr', key, iv);
+        const decryptedEntropy = Buffer.concat([decipher.update(encryptedEntropy), decipher.final()]);
+        currentMnemonic = entropyToMnemonic(decryptedEntropy);
+    }
+    
+    return currentMnemonic;
 }
 
 // --- Mnemonic/Entropy Conversion ---

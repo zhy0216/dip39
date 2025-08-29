@@ -37,7 +37,7 @@ test('encryptMnemonic and decryptMnemonic work correctly', () => {
     const testPin = '1234';
 
     // Encrypt the mnemonic
-    const encryptedMnemonic = encryptMnemonic(testMnemonic, testPin);
+    const encryptedMnemonic = encryptMnemonic(testMnemonic, testPin, 100);
 
     // It should not be the same as the original
     expect(encryptedMnemonic).not.toBe(testMnemonic);
@@ -46,7 +46,7 @@ test('encryptMnemonic and decryptMnemonic work correctly', () => {
     expect(encryptedMnemonic.split(' ').length).toBe(12);
 
     // Decrypt it back
-    const decryptedMnemonic = decryptMnemonic(encryptedMnemonic, testPin);
+    const decryptedMnemonic = decryptMnemonic(encryptedMnemonic, testPin, 100);
 
     // It should match the original mnemonic
     expect(decryptedMnemonic).toBe(testMnemonic);
@@ -56,11 +56,11 @@ test('decryptMnemonic fails with the wrong PIN', () => {
     const testEntropy = Buffer.from('1a2b3c4d5e6f78901a2b3c4d5e6f7890', 'hex');
     const testMnemonic = entropyToMnemonic(testEntropy);
     const testPin = '1234';
-    const encryptedMnemonic = encryptMnemonic(testMnemonic, testPin);
+    const encryptedMnemonic = encryptMnemonic(testMnemonic, testPin, 100);
     const wrongPin = '4321';
 
     // Decrypting with the wrong PIN should produce a different (garbage) mnemonic
-    const decryptedMnemonicWithWrongPin = decryptMnemonic(encryptedMnemonic, wrongPin);
+    const decryptedMnemonicWithWrongPin = decryptMnemonic(encryptedMnemonic, wrongPin, 100);
     expect(decryptedMnemonicWithWrongPin).not.toBe(testMnemonic);
 });
 
@@ -74,11 +74,11 @@ test('should handle a specific mnemonic phrase correctly', () => {
     expect(regeneratedMnemonic).toBe(mnemonic);
 
     // Test encryption and decryption
-    const encryptedMnemonic = encryptMnemonic(mnemonic, pin);
+    const encryptedMnemonic = encryptMnemonic(mnemonic, pin, 100);
     expect(encryptedMnemonic).not.toBe(mnemonic);
     expect(encryptedMnemonic.split(' ').length).toBe(12);
 
-    const decryptedMnemonic = decryptMnemonic(encryptedMnemonic, pin);
+    const decryptedMnemonic = decryptMnemonic(encryptedMnemonic, pin, 100);
     expect(decryptedMnemonic).toBe(mnemonic);
 });
 
