@@ -1,4 +1,4 @@
-import { createHash, createCipheriv, createDecipheriv } from 'crypto';
+import { createHash, createCipheriv, createDecipheriv, randomBytes } from 'crypto';
 import wordlist from './data/english.json';
 
 // --- Constants ---
@@ -93,5 +93,15 @@ export function entropyToMnemonic(entropy: Buffer): string {
         words.push(wordlist[index]);
     }
     return words.join(' ');
+}
+
+/**
+ * Generates a random BIP39 mnemonic phrase with the specified entropy length.
+ * @param entropyLength - Length of entropy in bytes (16 for 12 words, 20 for 15 words, 24 for 18 words, 28 for 21 words, 32 for 24 words)
+ * @returns A randomly generated mnemonic phrase
+ */
+export function generateMnemonic(entropyLength: number = 16): string {
+    const entropy = randomBytes(entropyLength);
+    return entropyToMnemonic(entropy);
 }
 
