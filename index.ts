@@ -1,18 +1,23 @@
-import { createHash, createCipheriv, createDecipheriv, randomBytes } from 'crypto';
+import { createHash, createCipheriv, createDecipheriv, randomBytes, pbkdf2Sync } from 'crypto';
 import wordlist from './data/english.json';
 
 // --- Constants ---
 const BITS_PER_WORD = 11;
-const IV_LENGTH = 16;
+const KEY_LENGTH = 32;
+const KEY_MATERIAL_LENGTH = 48; // 32 bytes key + 16 bytes IV
+const DEFAULT_ITERATIONS = 1_000_000;
+const DEFAULT_SALT = 'dip39-salt';
 const WORD_MAP = new Map(wordlist.map((w, i) => [w, i]));
 
 
 /**
- * Derives a deterministic key and IV from a PIN using SHA256.
+ * Derives a deterministic key and IV from a PIN using PBKDF2.
  */
-export function getKeyAndIv(pin: string): { key: Buffer; iv: Buffer } {
-    const key = createHash('sha256').update(pin).digest();
-    const iv = createHash('sha256').update(key).digest().slice(0, IV_LENGTH);
+export function getKeyAndIv(pin: string, salt: string = DEFAULT_SALT, iterations: number = DEFAULT_ITERATIONS): { key: Buffer; iv: Buffer } {
+    // Use PBKDF2 with configurable iterations for better security
+    const keyMaterial = pbkdf2Sync(pin, salt, iterations, KEY_MATERIAL_LENGTH, 'sha256');
+    const key = keyMaterial.slice(0, KEY_LENGTH);
+    const iv = keyMaterial.slice(KEY_LENGTH, KEY_MATERIAL_LENGTH);
     return { key, iv };
 }
 
@@ -20,41 +25,32 @@ export function getKeyAndIv(pin: string): { key: Buffer; iv: Buffer } {
  * Encrypts a mnemonic phrase using a PIN with AES-256-CTR.
  * @param mnemonic - The mnemonic phrase to encrypt
  * @param pin - The PIN to use for encryption
- * @param loops - Number of encryption loops (default: 1,000,000)
+ * @param iterations - Number of PBKDF2 iterations (default: 1,000,000)
  */
-export function encryptMnemonic(mnemonic: string, pin: string, loops: number = 1_000_000): string {
-    let currentMnemonic = mnemonic;
-    
-    for (let i = 0; i < loops; i++) {
-        const { key, iv } = getKeyAndIv(pin + i.toString());
-        const entropy = mnemonicToEntropy(currentMnemonic);
-        const cipher = createCipheriv('aes-256-ctr', key, iv);
-        const encryptedEntropy = Buffer.concat([cipher.update(entropy), cipher.final()]);
-        currentMnemonic = entropyToMnemonic(encryptedEntropy);
-    }
-    
-    return currentMnemonic;
+export function encryptMnemonic(mnemonic: string, pin: string, iterations: number = DEFAULT_ITERATIONS): string {
+    // Use PIN-derived salt for better security - each PIN gets unique salt
+    const salt = createHash('sha256').update(DEFAULT_SALT + pin).digest('hex');
+    const { key, iv } = getKeyAndIv(pin, salt, iterations);
+    const entropy = mnemonicToEntropy(mnemonic);
+    const cipher = createCipheriv('aes-256-ctr', key, iv);
+    const encryptedEntropy = Buffer.concat([cipher.update(entropy), cipher.final()]);
+    return entropyToMnemonic(encryptedEntropy);
 }
 
 /**
  * Decrypts an encrypted mnemonic phrase using a PIN.
  * @param encryptedMnemonic - The encrypted mnemonic phrase to decrypt
  * @param pin - The PIN to use for decryption
- * @param loops - Number of decryption loops (default: 1,000,000)
+ * @param iterations - Number of PBKDF2 iterations (default: 1,000,000)
  */
-export function decryptMnemonic(encryptedMnemonic: string, pin: string, loops: number = 1_000_000): string {
-    let currentMnemonic = encryptedMnemonic;
-    
-    // Decrypt in reverse order (from loops-1 down to 0)
-    for (let i = loops - 1; i >= 0; i--) {
-        const { key, iv } = getKeyAndIv(pin + i.toString());
-        const encryptedEntropy = mnemonicToEntropy(currentMnemonic);
-        const decipher = createDecipheriv('aes-256-ctr', key, iv);
-        const decryptedEntropy = Buffer.concat([decipher.update(encryptedEntropy), decipher.final()]);
-        currentMnemonic = entropyToMnemonic(decryptedEntropy);
-    }
-    
-    return currentMnemonic;
+export function decryptMnemonic(encryptedMnemonic: string, pin: string, iterations: number = DEFAULT_ITERATIONS): string {
+    // Use PIN-derived salt for better security - each PIN gets unique salt
+    const salt = createHash('sha256').update(DEFAULT_SALT + pin).digest('hex');
+    const { key, iv } = getKeyAndIv(pin, salt, iterations);
+    const encryptedEntropy = mnemonicToEntropy(encryptedMnemonic);
+    const decipher = createDecipheriv('aes-256-ctr', key, iv);
+    const decryptedEntropy = Buffer.concat([decipher.update(encryptedEntropy), decipher.final()]);
+    return entropyToMnemonic(decryptedEntropy);
 }
 
 // --- Mnemonic/Entropy Conversion ---
