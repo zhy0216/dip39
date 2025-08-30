@@ -21,12 +21,12 @@ async function getMode(iterator: ConsoleIterator): Promise<'encrypt' | 'decrypt'
     }
 }
 
-async function processMnemonic(phrase: string, pin: string, mode: 'encrypt' | 'decrypt'): Promise<string> {
+async function processMnemonic(phrase: string, pin: string, mode: 'encrypt' | 'decrypt', loops: number): Promise<string> {
     const mnemonic = phrase.trim().toLowerCase();
     try {
         return mode === 'encrypt'
-            ? encryptMnemonic(mnemonic, pin)
-            : decryptMnemonic(mnemonic, pin);
+            ? encryptMnemonic(mnemonic, pin, loops)
+            : decryptMnemonic(mnemonic, pin, loops);
     } catch (error) {
         if (error instanceof Error) {
             // Provide more specific feedback for common errors.
@@ -78,9 +78,21 @@ async function main() {
             // Handle encrypt/decrypt modes
             const mnemonic = await promptUser(consoleIterator, 'Enter your mnemonic phrase: ');
             const pin = await promptUser(consoleIterator, 'Enter your PIN: ');
+            
+            const loopsInput = await promptUser(consoleIterator, 'Enter number of loops (default: 1000000): ');
+            let loops = 1_000_000; // Default value
+            
+            if (loopsInput.trim() !== '') {
+                const parsedLoops = parseInt(loopsInput.trim(), 10);
+                if (!isNaN(parsedLoops) && parsedLoops > 0) {
+                    loops = parsedLoops;
+                } else {
+                    console.log('Invalid loops value. Using default 1,000,000.');
+                }
+            }
 
-            console.log('\nProcessing...');
-            const result = await processMnemonic(mnemonic, pin, mode);
+            console.log(`\nProcessing with ${loops.toLocaleString()} loops...`);
+            const result = await processMnemonic(mnemonic, pin, mode, loops);
 
             console.log('--- Result ---');
             console.log(result);
