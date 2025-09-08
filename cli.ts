@@ -1,8 +1,31 @@
-import { encryptMnemonic, decryptMnemonic, generateMnemonic } from './index';
+import { WORD_MAP, encryptMnemonic, decryptMnemonic, generateMnemonic } from './index';
 
 // --- Command-Line Interface (CLI) ---
 
 type ConsoleIterator = AsyncIterator<string, any, undefined>;
+
+// Function to convert index to binary dot pattern
+function indexToBinary(index: number) {
+    // Convert 1-based index to 0-based for binary conversion
+    const binaryIndex = index ;
+    
+    // Convert to 11-bit binary (2048 = 2^11)
+    const binary = binaryIndex.toString(2).padStart(12, '0');
+    
+    // Split into three columns: 4 bits, 4 bits, 3 bits
+    const col1 = binary.slice(0, 4);
+    const col2 = binary.slice(4, 8);
+    const col3 = binary.slice(8, 12)
+    
+    // Convert binary to dot pattern (0 = ○, 1 = ●)
+    const convertToDots = (bits: string) => bits.split('').map(bit => bit === '1' ? '●' : '○').join('');
+    
+    return {
+        col1: convertToDots(col1),
+        col2: convertToDots(col2),
+        col3: convertToDots(col3)
+    };
+}
 
 async function promptUser(iterator: ConsoleIterator, query: string): Promise<string> {
     // A simple text-based prompt for the console.
@@ -21,12 +44,28 @@ async function getMode(iterator: ConsoleIterator): Promise<'encrypt' | 'decrypt'
     }
 }
 
-async function processMnemonic(phrase: string, pin: string, mode: 'encrypt' | 'decrypt', loops: number): Promise<string> {
+async function processMnemonic(phrase: string, pin: string, mode: 'encrypt' | 'decrypt', loops: number): Promise<string | { result: string; words: Array<{ word: string; index: number; dots: { col1: string; col2: string; col3: string } }> }> {
     const mnemonic = phrase.trim().toLowerCase();
     try {
-        return mode === 'encrypt'
-            ? encryptMnemonic(mnemonic, pin, loops)
-            : decryptMnemonic(mnemonic, pin, loops);
+        if (mode === 'encrypt') {
+            const encryptedMnemonic = encryptMnemonic(mnemonic, pin, loops);
+            const encryptedWords = encryptedMnemonic.split(' ');
+            const wordsWithDots = encryptedWords.map(word => {
+                const index = WORD_MAP.get(word);
+                if (index === undefined) throw new Error(`Invalid word: ${word}`);
+                return {
+                    word,
+                    index: index + 1, // Convert to 1-based for display
+                    dots: indexToBinary(index + 1)
+                };
+            });
+            return {
+                result: encryptedMnemonic,
+                words: wordsWithDots
+            };
+        } else {
+            return decryptMnemonic(mnemonic, pin, loops);
+        }
     } catch (error) {
         if (error instanceof Error) {
             // Provide more specific feedback for common errors.
@@ -95,7 +134,19 @@ async function main() {
             const result = await processMnemonic(mnemonic, pin, mode, loops);
 
             console.log('--- Result ---');
-            console.log(result);
+            if (mode === 'encrypt' && typeof result === 'object' && 'result' in result) {
+                console.log('Encrypted Mnemonic:');
+                console.log(result.result);
+                console.log('\n--- Word Analysis with Dot Patterns ---');
+                console.log('Word\t\tIndex\tCol1\tCol2\tCol3');
+                console.log('----\t\t-----\t----\t----\t----');
+                result.words.forEach(({ word, index, dots }) => {
+                    const paddedWord = word.padEnd(12, ' ');
+                    console.log(`${paddedWord}\t${index}\t${dots.col1}\t${dots.col2}\t${dots.col3}`);
+                });
+            } else {
+                console.log(result);
+            }
             console.log('--------------');
         }
     } finally {

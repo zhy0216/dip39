@@ -7,7 +7,7 @@ const KEY_LENGTH = 32;
 const KEY_MATERIAL_LENGTH = 48; // 32 bytes key + 16 bytes IV
 const DEFAULT_ITERATIONS = 1_000_000;
 const DEFAULT_SALT = 'dip39-salt';
-const WORD_MAP = new Map(wordlist.map((w, i) => [w, i]));
+export const WORD_MAP = new Map(wordlist.map((w, i) => [w, i]));
 
 
 /**
